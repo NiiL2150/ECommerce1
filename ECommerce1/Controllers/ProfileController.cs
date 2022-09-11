@@ -21,6 +21,14 @@ namespace ECommerce1.Controllers
             this.configuration = configuration;
         }
 
+        [HttpGet]
+        public async Task<ActionResult<Profile>> GetOwn()
+        {
+            var profile = await resourceDbContext.Profiles.FirstOrDefaultAsync(x => x.Username == HttpContext.User.Identity.Name);
+            if (profile == null) return NotFound();
+            return Ok(profile);
+        }
+
         [HttpGet("{username}")]
         public async Task<ActionResult<Profile>> GetByUserNameAsync(string username)
         {

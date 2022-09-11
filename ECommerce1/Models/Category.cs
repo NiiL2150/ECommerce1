@@ -2,15 +2,18 @@
 {
     public class Category : AModel
     {
-        public string ParentId { get; set; }
+        public Category? ParentCategory { get; set; }
         public string Name { get; set; }
         public bool AllowProducts { get; set; }
+        public string? PhotoUrl { get; set; }
 
         public IList<Product> Products { get; set; }
+        public IList<Category> ChildCategories { get; set; }
 
         public Category()
         {
             Products = new List<Product>();
+            ChildCategories = new List<Category>();
         }
     }
 }

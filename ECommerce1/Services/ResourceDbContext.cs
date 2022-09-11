@@ -7,7 +7,7 @@ namespace ECommerce1.Services
     {
         public ResourceDbContext(DbContextOptions options) : base(options)
         {
-            Database.EnsureCreated();
+            //Database.EnsureCreated();
         }
 
         public DbSet<Profile> Profiles { get; set; }
@@ -57,6 +57,14 @@ namespace ECommerce1.Services
                 .WithOne(p => p.Category)
                 .IsRequired();
 
+                e.HasOne(c => c.ParentCategory)
+                .WithMany(c => c.ChildCategories)
+                .IsRequired(false);
+
+                e.HasMany(c => c.ChildCategories)
+                .WithOne(c => c.ParentCategory)
+                .IsRequired(false);
+
                 e.HasIndex(e => e.Name).IsUnique();
             });
 
@@ -97,6 +105,10 @@ namespace ECommerce1.Services
                 .HasColumnType("nvarchar(64)")
                 .HasMaxLength(64)
                 .IsRequired();
+
+                e.Property(e => e.MiddleName)
+                .HasColumnType("nvarchar(64)")
+                .HasMaxLength(64);
 
                 e.Property(e => e.LastName)
                 .HasColumnType("nvarchar(64)")

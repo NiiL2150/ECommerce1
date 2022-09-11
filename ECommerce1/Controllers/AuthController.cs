@@ -162,6 +162,7 @@ namespace ECommerce1.Controllers
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
                 FirstName = registrationDto.FirstName,
+                MiddleName = registrationDto.MiddleName,
                 LastName = registrationDto.LastName,
                 City = city,
                 ProfilePictureURL = configuration["Links:Site"] + "images/default.png",

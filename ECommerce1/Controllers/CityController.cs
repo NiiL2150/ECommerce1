@@ -42,6 +42,8 @@ namespace ECommerce1.Controllers
             return Ok();
         }
 
+        //TODO: Name edit
+
         [HttpDelete("delete")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAsync(string name)
