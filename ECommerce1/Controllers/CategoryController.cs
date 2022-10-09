@@ -1,7 +1,7 @@
 ﻿using ECommerce1.Models;
+using ECommerce1.Models.ViewModels;
 using ECommerce1.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,20 +12,19 @@ namespace ECommerce1.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly ResourceDbContext resourceDbContext;
-        private readonly IConfiguration configuration;
 
-        public CategoryController(ResourceDbContext resourceDbContext, IConfiguration configuration)
+        public CategoryController(ResourceDbContext resourceDbContext)
         {
             this.resourceDbContext = resourceDbContext;
-            this.configuration = configuration;
         }
 
         [HttpPost("add/main")]
         [Authorize(Roles = "Admin")]
         //TODO: Add support for category images
-        public async Task<IActionResult> AddMainCategory(Category category)
+        public async Task<IActionResult> AddMainCategory(AddCategoryViewModel category)
         {
-            if(category.ParentCategory != null)
+            Category? parentCategoty = await this.resourceDbContext.Categories.FirstOrDefaultAsync(c => c.Id == category.ParentCategoryId);
+            if(category.ParentCategoryId != null)
             {
                 return RedirectToAction("AddSubCategory", "Category", new { category });
             }
@@ -34,7 +33,14 @@ namespace ECommerce1.Controllers
             {
                 return BadRequest("Category with such name already exists");
             }
-            await resourceDbContext.Categories.AddAsync(category);
+            Category newCategory = new()
+            {
+                AllowProducts = category.AllowProducts,
+                Name = category.Name,
+                PhotoUrl = category.PhotoUrl,
+                ParentCategory = null
+            };
+            await resourceDbContext.Categories.AddAsync(newCategory);
             await resourceDbContext.SaveChangesAsync();
             return Ok();
         }
@@ -42,13 +48,14 @@ namespace ECommerce1.Controllers
         [HttpPost("add/sub")]
         [Authorize(Roles = "Admin")]
         //TODO: Add support for category images
-        public async Task<IActionResult> AddSubCategory(Category category)
+        public async Task<IActionResult> AddSubCategory(AddCategoryViewModel category)
         {
-            if (category.ParentCategory == null)
+            if (category.ParentCategoryId == null)
             {
-                return RedirectToAction("AddMainCategory", "Category", new { category });
+                return BadRequest();
             }
-            if(await resourceDbContext.Categories.FirstOrDefaultAsync(c => c.Id.ToString() == category.ParentCategory.Id.ToString())  == null)
+            Category? parentCategory = await resourceDbContext.Categories.FirstOrDefaultAsync(c => c.Id.ToString() == category.ParentCategoryId.ToString());
+            if (parentCategory  == null)
             {
                 return BadRequest("No parent category with such id was found");
             }
@@ -57,7 +64,14 @@ namespace ECommerce1.Controllers
             {
                 return BadRequest("Category with such name already exists");
             }
-            await resourceDbContext.Categories.AddAsync(category);
+            Category newCategory = new()
+            {
+                AllowProducts = category.AllowProducts,
+                Name = category.Name,
+                PhotoUrl = category.PhotoUrl,
+                ParentCategory = parentCategory
+            };
+            await resourceDbContext.Categories.AddAsync(newCategory);
             await resourceDbContext.SaveChangesAsync();
             return Ok();
         }
@@ -65,7 +79,7 @@ namespace ECommerce1.Controllers
         [HttpGet]
         public async Task<IEnumerable<Category>> GetMainCategories()
         {
-            List<Category> categories = await resourceDbContext.Categories.Where(c => c.ParentCategory == null).ToListAsync();
+            var categories = await resourceDbContext.Categories.Where(c => c.ParentCategory == null).ToListAsync();
             return categories;
         }
 
@@ -78,17 +92,13 @@ namespace ECommerce1.Controllers
             {
                 return NotFound("No such category exists");
             }
-            if (category.AllowProducts)
-            {
-                return RedirectToAction("ByCategoryId", "Product", new { guid });
-            }
-            return RedirectToAction("GetSubCategories", "Category", new { guid });
+            return category.AllowProducts ? RedirectToAction("ByCategoryId", "Product", new { guid }) : RedirectToAction("GetSubCategories", "Category", new { guid });
         }
 
         [HttpGet("sub/{guid}")]
         public async Task<ActionResult<Category>> GetSubCategories(string guid)
         {
-            Category? category = await resourceDbContext.Categories
+            var category = await resourceDbContext.Categories
                 .Include(c => c.ChildCategories)
                 .FirstOrDefaultAsync(c => c.Id.ToString() == guid);
             if(category == null)

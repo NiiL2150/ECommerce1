@@ -48,7 +48,7 @@ namespace ECommerce1.Extensions
             services.Configure<TokenGeneratorOptions>(options =>
             {
                 options.Secret = secret;
-                options.AccessExpiration = TimeSpan.FromMinutes(15);
+                options.AccessExpiration = TimeSpan.FromHours(2);
                 options.RefreshExpiration = TimeSpan.FromDays(30);
             });
 

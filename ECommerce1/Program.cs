@@ -8,6 +8,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -32,7 +33,8 @@ services.AddIdentity<AuthUser, IdentityRole>(options =>
     options.Password.RequireUppercase = false;
 }).AddEntityFrameworkStores<AccountDbContext>();
 
-services.AddControllers();
+services.AddControllers().AddJsonOptions(x =>
+   x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
 services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
 services.AddEndpointsApiExplorer();
 services.AddSwagger();

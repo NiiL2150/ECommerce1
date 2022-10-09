@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace ECommerce1.Models
+﻿namespace ECommerce1.Models
 {
     public class Profile : AModel
     {

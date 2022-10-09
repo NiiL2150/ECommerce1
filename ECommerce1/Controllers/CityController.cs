@@ -1,7 +1,6 @@
 ﻿using ECommerce1.Models;
 using ECommerce1.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +12,7 @@ namespace ECommerce1.Controllers
     {
         private readonly ResourceDbContext resourceDbContext;
 
-        public CityController(ResourceDbContext resourceDbContext, IConfiguration configuration)
+        public CityController(ResourceDbContext resourceDbContext)
         {
             this.resourceDbContext = resourceDbContext;
         }

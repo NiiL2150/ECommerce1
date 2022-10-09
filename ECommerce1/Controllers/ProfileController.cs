@@ -2,7 +2,6 @@
 using ECommerce1.Models;
 using ECommerce1.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,6 +31,10 @@ namespace ECommerce1.Controllers
         [HttpGet("{username}")]
         public async Task<ActionResult<Profile>> GetByUserNameAsync(string username)
         {
+            if(username == HttpContext.User.Identity.Name)
+            {
+                return RedirectToAction("GetOwn");
+            }
             var profile = await resourceDbContext.Profiles.FirstOrDefaultAsync(x => x.Username == username);
             if (profile == null) return NotFound();
             return Ok(profile);
@@ -43,20 +46,20 @@ namespace ECommerce1.Controllers
         {
             if (HttpContext.Request.Form.Files.Any())
             {
-                foreach (var file in HttpContext.Request.Form.Files)
+                foreach (IFormFile file in HttpContext.Request.Form.Files)
                 {
                     var newName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                    var blobServiceClient = new BlobServiceClient(configuration.GetConnectionString("BlobStorage"));
-                    var containerClient = blobServiceClient.GetBlobContainerClient("uploads");
-                    var containerClient2 = blobServiceClient.GetBlobContainerClient("thumbnails");
+                    BlobServiceClient blobServiceClient = new(configuration.GetConnectionString("BlobStorage"));
+                    BlobContainerClient? containerClient = blobServiceClient.GetBlobContainerClient("uploads");
+                    BlobContainerClient? containerClient2 = blobServiceClient.GetBlobContainerClient("thumbnails");
                     var username = HttpContext.User.Identity.Name;
-                    var profile = await resourceDbContext.Profiles.FirstOrDefaultAsync(p => p.Username == username);
-                    if (!String.IsNullOrWhiteSpace(profile.ProfilePictureURL))
+                    Profile? profile = await resourceDbContext.Profiles.FirstOrDefaultAsync(p => p.Username == username);
+                    if (!string.IsNullOrWhiteSpace(profile.ProfilePictureURL))
                     {
                         var oldFileName = profile.ProfilePictureURL.Substring(profile.ProfilePictureURL.LastIndexOf('/') + 1);
                         await containerClient.DeleteBlobIfExistsAsync(oldFileName);
                     }
-                    if (!String.IsNullOrWhiteSpace(profile.PreviewProfilePictureURL))
+                    if (!string.IsNullOrWhiteSpace(profile.PreviewProfilePictureURL))
                     {
                         var oldPreviewFileName = profile.PreviewProfilePictureURL.Substring(profile.PreviewProfilePictureURL.LastIndexOf('/') + 1);
                         await containerClient2.DeleteBlobIfExistsAsync(oldPreviewFileName);
@@ -75,17 +78,17 @@ namespace ECommerce1.Controllers
         [Authorize]
         public async Task<IActionResult> Reset()
         {
-            var blobServiceClient = new BlobServiceClient(configuration.GetConnectionString("BlobStorage"));
-            var containerClient = blobServiceClient.GetBlobContainerClient("uploads");
-            var containerClient2 = blobServiceClient.GetBlobContainerClient("thumbnails");
+            BlobServiceClient blobServiceClient = new(configuration.GetConnectionString("BlobStorage"));
+            BlobContainerClient? containerClient = blobServiceClient.GetBlobContainerClient("uploads");
+            BlobContainerClient? containerClient2 = blobServiceClient.GetBlobContainerClient("thumbnails");
             var username = HttpContext.User.Identity.Name;
-            var profile = await resourceDbContext.Profiles.FirstOrDefaultAsync(p => p.Username == username);
-            if (!String.IsNullOrWhiteSpace(profile.ProfilePictureURL))
+            Profile? profile = await resourceDbContext.Profiles.FirstOrDefaultAsync(p => p.Username == username);
+            if (!string.IsNullOrWhiteSpace(profile.ProfilePictureURL))
             {
                 var oldFileName = profile.ProfilePictureURL.Substring(profile.ProfilePictureURL.LastIndexOf('/') + 1);
                 await containerClient.DeleteBlobIfExistsAsync(oldFileName);
             }
-            if (!String.IsNullOrWhiteSpace(profile.PreviewProfilePictureURL))
+            if (!string.IsNullOrWhiteSpace(profile.PreviewProfilePictureURL))
             {
                 var oldPreviewFileName = profile.PreviewProfilePictureURL.Substring(profile.PreviewProfilePictureURL.LastIndexOf('/') + 1);
                 await containerClient2.DeleteBlobIfExistsAsync(oldPreviewFileName);
